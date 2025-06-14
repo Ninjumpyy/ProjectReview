@@ -169,11 +169,11 @@ void webserv::Parser::decodePercentage(std::string& token)
 
 	for (size_t i = 0; i < token.size(); i++)
 	{
-		if (token[i] == '%')
-		{
-			if (i + 2 < token.size())
-				throw HttpError(400);
-			char c = hexastringtoint(token.substr(i + 1, 2));
+                if (token[i] == '%')
+                {
+                        if (i + 2 >= token.size())
+                                throw HttpError(400);
+                        char c = hexastringtoint(token.substr(i + 1, 2));
 			new_token.push_back(c);
 			i += 2;
 		}
