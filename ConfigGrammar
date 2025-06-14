@@ -1,0 +1,45 @@
+
+<Config>                      ::= { <ServerBlock> } T_END ;
+
+<ServerBlock>                 ::= T_SERVER T_LBRACE
+                                    <ListenDirective>
+                                    { <ServerNameDirective>
+                                    |   <RootDirective>
+                                    |   <IndexDirective>
+                                    |   <ErrorPageDirective>
+                                    |   <ClientMaxBodySizeDirective>
+                                    |   <LocationBlock>
+                                    }
+                                  T_RBRACE ;
+
+<ListenDirective>   ::= T_LISTEN <Host> T_COLON <Port> T_SEMICOLON ;
+
+<Host>              ::= T_IDENTIFIER ;
+
+<Port>				::= T_NUMBER ;
+
+<ServerNameDirective>         ::= T_SERVER_NAME { T_IDENTIFIER } T_SEMICOLON ;
+
+<RootDirective>               ::= T_ROOT T_IDENTIFIER T_SEMICOLON ;
+
+<IndexDirective> ::= T_INDEX { <Filename> } T_SEMICOLON ;
+
+<Filename>       ::= T_IDENTIFIER ; 
+
+<ErrorPageDirective>          ::= T_ERROR_PAGE {T_NUMBER} T_IDENTIFIER T_SEMICOLON ;
+
+<ClientMaxBodySizeDirective>  ::= T_CLIENT_MAX_BODY_SIZE T_NUMBER T_SEMICOLON ;
+
+<LocationBlock>               ::= T_LOCATION T_IDENTIFIER T_LBRACE | T_LOCATION T_REGEX T_REGEX_STRING T_LBRACE
+                                    { <LocationDirective> }
+                                  T_RBRACE ;
+
+<LocationDirective>           ::= T_METHODS { T_IDENTIFIER } T_SEMICOLON
+                                | T_RETURN   T_NUMBER T_IDENTIFIER T_SEMICOLON
+                                | T_ROOT     T_IDENTIFIER T_SEMICOLON
+                                | T_ALIAS    T_IDENTIFIER T_SEMICOLON
+                                | T_AUTOINDEX ( T_ON | T_OFF ) T_SEMICOLON
+                                | T_INDEX    { T_IDENTIFIER } T_SEMICOLON
+                                | T_CGI_PASS T_IDENTIFIER T_SEMICOLON
+                                | T_UPLOAD_STORE T_IDENTIFIER T_SEMICOLON
+                                ;
