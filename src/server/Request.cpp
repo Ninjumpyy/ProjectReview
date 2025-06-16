@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 17:28:07 by thomas            #+#    #+#             */
-/*   Updated: 2025/06/16 13:02:36 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/16 16:21:50 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,11 @@ const webserv::Config::LocationConfig* webserv::Request::getLocationBlock(void) 
 	return (m_locationBlock);
 }
 
+const std::string& webserv::Request::getPathInfo(void) const
+{
+	return (m_pathInfo);
+}
+
 void webserv::Request::setMethod(Method method)
 {
 	m_method = method;
@@ -108,6 +113,12 @@ void webserv::Request::setLocationBlock(const webserv::Config::LocationConfig* l
 {
 	m_locationBlock = locationBlock;
 }
+
+void webserv::Request::setPathInfo(const std::string& pathInfo)
+{
+	m_pathInfo = pathInfo;
+}
+
 size_t webserv::Request::getExpectedLength() const
 {
 	return m_upload.getContentLength();	
@@ -174,6 +185,7 @@ void webserv::Request::clearForNextRequest(void)
 	m_headers.clear();
 	m_serverBlock = NULL;
 	m_locationBlock = NULL;
+	m_pathInfo.clear();
 }
 
 void webserv::Request::validateRequest(void)
@@ -246,26 +258,39 @@ void webserv::Request::selectLocationBlock()
 	for (size_t i = 0; i < m_serverBlock->locations.size(); ++i)
 	{
 		const std::string & prefix = m_serverBlock->locations[i].prefix;
-		size_t prefixLen = prefix.size();
-		std::cerr << "Path is " << m_path << " prefix is " << prefix <<std::endl; 
-		if (m_path.size() < prefixLen)
-			continue;
-		
-		if (m_path.compare(0, prefixLen, prefix) == 0)
+
+		if (prefix[0] == '.') //REGEX location: match extension
 		{
-			if (m_path.size() == prefixLen)
+			if (m_path.size() >= prefix.size() && m_path.compare(m_path.size() - prefix.size(), prefix.size(), prefix) == 0)
 			{
 				locationBlock = &m_serverBlock->locations[i];
+				std::cerr << "Found regex location block with prefix: " << prefix << std::endl;
 				break ;
 			}
-			if (prefix == "/" || m_path[prefixLen] == '/' || prefix[prefixLen - 1] == '/')
+		}
+		else
+		{
+			size_t prefixLen = prefix.size();
+			std::cerr << "Path is " << m_path << " prefix is " << prefix <<std::endl; 
+			if (m_path.size() < prefixLen)
+				continue;
+			
+			if (m_path.compare(0, prefixLen, prefix) == 0)
 			{
-				if (prefixLen > bestLen)
+				if (m_path.size() == prefixLen)
 				{
 					locationBlock = &m_serverBlock->locations[i];
-					bestLen = prefixLen;
+					break ;
 				}
-				
+				if (prefix == "/" || m_path[prefixLen] == '/' || prefix[prefixLen - 1] == '/')
+				{
+					if (prefixLen > bestLen)
+					{
+						locationBlock = &m_serverBlock->locations[i];
+						bestLen = prefixLen;
+					}
+					
+				}
 			}
 		}
 	}

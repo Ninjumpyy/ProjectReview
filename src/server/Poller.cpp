@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Poller.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandie@student.42luxembourg.    +#+  +:+       +#+        */
+/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 15:12:40 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/14 09:25:57 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/16 14:59:47 by rpandipe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <iostream>
 #include <cerrno>
+#include <ctime>
+#include <map>
 
 webserv::Poller::Poller():m_running(true) {}
 
@@ -99,44 +101,65 @@ const char* webserv::Poller::FdErrorException::what() const throw()
 
 void webserv::Poller::run()
 {
+	static const int  POLL_INTERVAL_MS  = 500;
+    static const int  REQUEST_TIMEOUT_S = 30; 
 	std::cerr << "Poller: Starting event loop" << std::endl;
+	std::map<int, time_t> last_active;
 	while (m_running)
 	{
+		time_t now = ::time(NULL);
 		if (m_pollfd.empty())  
 		{
 			std::cerr << "Poller: No fds to poll" << std::endl;
-			continue;
+			::poll(NULL, 0, POLL_INTERVAL_MS);
 		}
-		
-		std::cerr << "Poller: Polling " << m_pollfd.size() << " fds" << std::endl;
-		int ready = ::poll(&m_pollfd[0], m_pollfd.size(), -1);
-		if (ready < 0)
+		else
 		{
-			if (errno == EINTR)
+			std::cerr << "Poller: Polling " << m_pollfd.size() << " fds" << std::endl;
+			int ready = ::poll(&m_pollfd[0], m_pollfd.size(), POLL_INTERVAL_MS);
+			if (ready < 0)
 			{
-				std::cerr << "Poller: Poll interrupted by signal" << std::endl;
+				if (errno == EINTR)
+				{
+					std::cerr << "Poller: Poll interrupted by signal" << std::endl;
+					break;
+				}
+				std::cerr << "Poll Failed" << std::endl;
 				break;
 			}
-			std::cerr << "Poll Failed" << std::endl;
-			break;
-		}
-		for (size_t i = 0; i < m_pollfd.size(); i++)
-		{
-			short re = m_pollfd[i].revents;
-			if (re == 0)
-				continue;
-			std::cerr << "Poller: Event on fd " << m_pollfd[i].fd << " with revents " << re << std::endl;
-			m_pollfd[i].revents = 0;
-			IEventHandler* h = m_handlers[i];
-			if (h)
+			for (size_t i = 0; i < m_pollfd.size(); i++)
 			{
-				try {
-					h->onEvent(re);
-				} catch (const std::exception& e) {
-					std::cerr << "Poller: Error handling event: " << e.what() << std::endl;
-					remove(m_pollfd[i].fd);
+				struct pollfd &pfd = m_pollfd[i];
+				short re = pfd.revents;
+				if (re == 0)
+					continue;
+				last_active[pfd.fd] = now;
+				std::cerr << "Poller: Event on fd " << pfd.fd << " with revents " << re << std::endl;
+				pfd.revents = 0;
+				IEventHandler* h = m_handlers[i];
+				if (h)
+				{
+					try {
+						h->onEvent(re);
+					} catch (const std::exception& e) {
+						std::cerr << "Poller: Error handling event: " << e.what() << std::endl;
+						remove(pfd.fd);
+						last_active.erase(pfd.fd);
+					}
 				}
 			}
+		}
+		for (std::map<int, time_t>::iterator it = last_active.begin(); it != last_active.end(); /* no increment */)
+		{
+			if (now - it->second > REQUEST_TIMEOUT_S)
+			{
+				int fd = it->first;
+				std::cerr << "Poller: Timing out fd " << fd << std::endl;
+				remove(fd);
+				it = last_active.erase(it);
+			}
+			else
+				++it;
 		}
 	}
 	std::cerr << "Poller: Event loop ended" << std::endl;

@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 17:28:45 by thomas            #+#    #+#             */
-/*   Updated: 2025/06/13 17:26:05 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/16 16:10:20 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,7 @@ namespace webserv
 			const std::map<std::string, std::vector<std::string> > &getHeaders(void) const;
 			const webserv::Config::Server* getServerBlock(void) const;
 			const webserv::Config::LocationConfig* getLocationBlock(void) const;
+			const std::string& getPathInfo(void) const;
 
 			void setMethod(Method method);
 			void setPath(std::string path);
@@ -67,6 +68,7 @@ namespace webserv
 			void setKeepAlive(bool);
 			void setServerBlock(const webserv::Config::Server* serverBlock);
 			void setLocationBlock(const webserv::Config::LocationConfig* locationBlock);
+			void setPathInfo(const std::string& pathInfo);
 			void setCookie(const std::string& name, const std::string& val);
 			std::string getCookie(const std::string& name) const;
 
@@ -94,6 +96,9 @@ namespace webserv
 			std::map<std::string,std::string> m_cookies;
 
 			bool		m_keepAlive;
+
+			std::string m_pathInfo; // for CGI
+			//std::string m_scriptName; // for CGI
 
 			Request(const Request&);
 			Request& operator=(const Request&);

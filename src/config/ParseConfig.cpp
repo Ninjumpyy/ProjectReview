@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/22 15:30:25 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/16 13:45:19 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/16 15:11:41 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ const std::vector<webserv::Config::Server>& webserv::Config::getServers() const
 
 void webserv::Config::parseConfig()
 {
-	std::ifstream in(m_path);
+	std::ifstream in(m_path.c_str());
 	if (!in)
 		throw std::runtime_error("Error: Cannot Open config file");
 	std::ostringstream ss;
@@ -430,6 +430,7 @@ void webserv::Config::parseLocation(Server &server)
 		if (loc.prefix.empty() || loc.prefix[0] != '\\' || loc.prefix[loc.prefix.size() - 1] != '$')
 			throw std::runtime_error("Invalid location regex in line :" +
 										peek().text);
+		loc.prefix = loc.prefix.substr(1, loc.prefix.size() - 2); // remove leading \ and trailing $
 	}
 	else if (peek().type == T_IDENTIFIER)
 	{
@@ -555,10 +556,12 @@ void webserv::Config::parseLocation(Server &server)
 				loc.cgiPass = cgiPass;
 				webserv::CgiProcess::CgiMapping cgi;
 				if (isRegex)
-					cgi.extension = loc.prefix.substr(1, loc.prefix.size() - 2);
-				else
 					cgi.extension = loc.prefix;
-				cgi.interpreter = loc.cgiPass;
+				else
+				{
+					size_t pos = loc.cgiPass.find_last_of('.');
+					cgi.extension = loc.cgiPass.substr(pos + 1);
+				}
 				std::cerr << "Adding CGI mapping for extension: " << cgi.extension << " interpreter is " << cgi.interpreter << std::endl;
 				server.cgi.push_back(cgi);
 				break;

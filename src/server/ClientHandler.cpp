@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 17:15:00 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/16 12:39:07 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/16 16:10:58 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -359,11 +359,45 @@ void webserv::ClientHandler::evaluateTransition(void)
 
 	if (m_request.getLocationBlock() && !m_request.getLocationBlock()->cgiPass.empty())
 	{
-		size_t pos = m_request.getPath().find_last_of('.');
-		std::string ext = m_request.getPath().substr(pos);
-		if (ext == m_request.getLocationBlock()->cgiPass)
+		size_t pos = m_request.getLocationBlock()->cgiPass.find_last_of('.');
+		std::string cgiExtension = m_request.getLocationBlock()->cgiPass.substr(pos);
+		std::stringstream ss(m_request.getPath());
+		std::string scriptName;
+		std::string segment;
+		std::string pathInfo;
+		bool foundScript = false;
+
+		while (std::getline(ss, segment, '/')) 
+		{
+			if (!segment.empty() && !foundScript) 
+			{
+				size_t dot = segment.find_last_of('.');
+				if (dot != std::string::npos) 
+				{
+					std::string ext = segment.substr(dot);
+					if (!cgiExtension.empty()) 
+					{
+						scriptName += segment;
+						foundScript = true;
+						continue;
+					}
+				}
+				scriptName += segment + "/";
+			} 
+			else if (foundScript) 
+			{
+				pathInfo += "/" + segment;
+			}
+		}
+
+		if (foundScript) 
+		{
 			isCGI = true;
-	}
+			m_request.setPath(pathInfo); // pathInfo is the PATH_INFO
+			// scriptName is the CGI script path (URL)
+			// pathInfo is the PATH_INFO
+		}
+	}	
 }
 
 void webserv::ClientHandler::prepareResponse()

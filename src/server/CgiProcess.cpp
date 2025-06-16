@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiProcess.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandie@student.42luxembourg.    +#+  +:+       +#+        */
+/*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/02 14:10:02 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/14 00:54:57 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/16 16:23:18 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,8 @@ void webserv::CgiProcess::spawn()
 		std::ostringstream oss;
 		oss << m_request.getExpectedLength();
 		envstr.push_back("CONTENT_LENGTH=" + oss.str());
+		if (!m_request.getPathInfo().empty())
+			envstr.push_back("PATH_INFO=" + m_request.getPathInfo());
 		
 		const std::map<std::string, std::vector<std::string> > header = m_request.getHeaders();
 		std::map<std::string, std::vector<std::string> >::const_iterator it = header.begin();
@@ -104,7 +106,7 @@ void webserv::CgiProcess::spawn()
 		argv.push_back(NULL);
 
 		std::string script_dir;
-		for(size_t i = m_script.size(); i > 0; i++)
+		for(size_t i = m_script.size(); i > 0; i--)
 		{
 			if (m_script[i] == '/')
 			{
@@ -176,7 +178,7 @@ void webserv::CgiProcess::sendRequestBody()
 void webserv::CgiProcess::readResponse()
 {
 
-	if (m_finishedreading || !m_cgi_inwrite.isValid())
+	if (m_finishedreading || !m_cgi_outread.isValid())
 		return;
 	
 	char buffer[4096];
