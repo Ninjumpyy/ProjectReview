@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/21 13:24:06 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/16 12:50:35 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/16 13:45:25 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,14 +23,15 @@ int main(int argc, char** argv)
 {
 	try
 	{
-		if (argc != 2)
+		if (argc <= 2)
 		{
-			std::cerr << "Usage: " << argv[0] << " <config_file>" << std::endl;
-			return (1);
-		}
-		else
-		{
-			webserv::Config config(argv[1]);
+			std::string configFileName;
+			if (argc == 1) // Use default config file
+				configFileName = "webserv.conf"; 
+			else if (argc == 2)
+				configFileName = argv[1];
+
+			webserv::Config config(configFileName);
 			config.parseConfig();
 			const std::vector<webserv::Config::Server> server = config.getServers();
 			webserv::ConfigValidator valid(server);
@@ -39,6 +40,11 @@ int main(int argc, char** argv)
 			webserv::ServerManager manager;
 			manager.setupsockets(server);
 			manager.startserver();
+		}
+		else
+		{
+			std::cerr << "Usage: " << argv[0] << " <config_file>" << std::endl;
+			return (1);
 		}
 	}
 	catch (const std::exception &e)

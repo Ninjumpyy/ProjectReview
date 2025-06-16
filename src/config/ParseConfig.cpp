@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ParseConfig.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandie@student.42luxembourg.    +#+  +:+       +#+        */
+/*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/22 15:30:25 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/14 09:39:59 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/16 13:45:19 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 #include <iostream>
 #include <cstdlib>
 
-webserv::Config::Config(char *path) : m_path(path), m_pos(0) {}
+webserv::Config::Config(std::string path) : m_path(path), m_pos(0) {}
 
 webserv::Config::~Config() {}
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ParseConfig.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandie@student.42luxembourg.    +#+  +:+       +#+        */
+/*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/22 15:07:44 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/14 00:25:42 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/16 13:45:09 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,7 +91,7 @@ namespace webserv
 				{};
 			};
 
-			explicit Config(char *path);
+			explicit Config(std::string path);
 			~Config();
 			void parseConfig();
 			const char* getHost() const;
@@ -118,7 +118,7 @@ namespace webserv
 			void printTokens();
 			void splitLabels(std::string &name, std::vector<std::string> &labels);
 			
-			char *m_path;
+			std::string m_path;
 			std::vector<Token> m_token;
 			std::vector<Server> m_server;
 			std::string m_source;
