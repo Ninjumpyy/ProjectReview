@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 17:15:00 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/13 18:05:04 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/16 12:39:07 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,6 +109,7 @@ void webserv::ClientHandler::onEvent(short revents)
 
 				if (isCGI)
 				{
+					std::cerr << "ClientHandler: CGI" << std::endl;
 					if (m_upload.isChunked())
 					{
 						if (m_request.parseChunkedBody(m_fd.getfd(), m_upload.getMaxBodySize(), m_upload.getContentLength()))

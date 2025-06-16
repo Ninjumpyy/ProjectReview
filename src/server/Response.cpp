@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/26 15:41:15 by tle-moel          #+#    #+#             */
-/*   Updated: 2025/06/13 16:58:29 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/16 13:00:08 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,8 +93,17 @@ void webserv::Response::buildErrorMessage(int code)
 
 	addHeader("Content-Length", to_string(ErrorPage.size()));
 
-	if (code == 405)
-		addHeader("Allow", m_request.getMethod());
+	if (code == 405 && m_request.getLocationBlock() && !m_request.getLocationBlock()->methods.empty())
+	{
+		std::string allowedMethods;
+		for (std::vector<std::string>::const_iterator it = m_request.getLocationBlock()->methods.begin(); it != m_request.getLocationBlock()->methods.end(); it++)
+		{
+			allowedMethods += *it;
+			if (it + 1 != m_request.getLocationBlock()->methods.end())
+				allowedMethods += ", ";
+		}
+		addHeader("Allow", allowedMethods);
+	}
 	
 	if (code >= 400)
 		m_request.setKeepAlive(false);

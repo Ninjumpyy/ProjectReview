@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Poller.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: rpandipe <rpandie@student.42luxembourg.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 14:59:59 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/05/28 12:53:39 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/14 08:53:46 by rpandipe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ class Poller
 		void modify(int fd, short newevent);
 		void remove(int fd);
 		void run();
+		void stop();
 
 		class FdErrorException: public std::exception
 		{

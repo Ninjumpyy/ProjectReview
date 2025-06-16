@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: rpandipe <rpandie@student.42luxembourg.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 11:35:26 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/04 17:54:03 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/14 08:55:16 by rpandipe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,13 +15,25 @@
 #include "server/Parser.hpp"
 #include <set>
 #include <utility>
+#include <signal.h>
 
-webserv::ServerManager::ServerManager() {}
+webserv::ServerManager::ServerManager() 
+{
+	::signal(SIGINT,  &ServerManager::handleSignal);
+    ::signal(SIGTERM, &ServerManager::handleSignal);
+}
 
 webserv::ServerManager::~ServerManager()
 {
 	for (size_t i = 0; i < m_sockets.size(); i++)
 		delete m_sockets[i];
+}
+
+void webserv::ServerManager::handleSignal(int signum)
+{
+    std::cerr << "Received signal " << signum << ", shutting down server...\n";
+    webserv::Poller::getInstance().stop();
+	std::cerr << "Server shutdown successful." << std::endl;
 }
 
 void webserv::ServerManager::setupsockets(const std::vector<webserv::Config::Server> &server)

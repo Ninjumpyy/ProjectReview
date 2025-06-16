@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerManager.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: rpandipe <rpandie@student.42luxembourg.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/28 11:26:25 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/05/28 17:44:05 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/14 08:52:21 by rpandipe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ class ServerManager
 
 		ServerManager(const ServerManager &other);
 		ServerManager& operator=(const ServerManager &other);
+		static void handleSignal(int signum);
 };
 }
 #endif

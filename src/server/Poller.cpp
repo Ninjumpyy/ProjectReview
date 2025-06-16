@@ -3,30 +3,31 @@
 /*                                                        :::      ::::::::   */
 /*   Poller.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: rpandipe <rpandie@student.42luxembourg.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 15:12:40 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/05/28 14:48:58 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/14 09:25:57 by rpandipe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server/Poller.hpp"
 #include <algorithm>
 #include <iostream>
+#include <cerrno>
 
 webserv::Poller::Poller():m_running(true) {}
 
 webserv::Poller::~Poller() 
 {
 	std::cerr << "Poller: Destructor called" << std::endl;
-	for (size_t i = 0; i < m_handlers.size(); ++i)
+	/*for (size_t i = 0; i < m_handlers.size(); ++i)
 	{
 		if (m_handlers[i])
 		{
 			delete m_handlers[i];
 			m_handlers[i] = NULL;
 		}
-	}
+	}*/
 	m_handlers.clear();
 	m_pollfd.clear();
 }
@@ -70,13 +71,13 @@ void webserv::Poller::remove(int fd)
 	int index = findIndex(fd);
 	if (index != -1)
 	{
-		IEventHandler *handler = m_handlers[index];
+		//IEventHandler *handler = m_handlers[index];
 		// I think we can remove this line
-		// m_handlers[index] = NULL;
+		//m_handlers[index] = NULL;
 		m_pollfd.erase(m_pollfd.begin() + index);
 		m_handlers.erase(m_handlers. begin() + index);
-		if (handler)
-			delete (handler);
+		//if (handler)
+		//	delete (handler);
 		std::cerr << "Poller: Removed fd " << fd << std::endl;
 	}
 }
@@ -111,6 +112,11 @@ void webserv::Poller::run()
 		int ready = ::poll(&m_pollfd[0], m_pollfd.size(), -1);
 		if (ready < 0)
 		{
+			if (errno == EINTR)
+			{
+				std::cerr << "Poller: Poll interrupted by signal" << std::endl;
+				break;
+			}
 			std::cerr << "Poll Failed" << std::endl;
 			break;
 		}
@@ -134,4 +140,10 @@ void webserv::Poller::run()
 		}
 	}
 	std::cerr << "Poller: Event loop ended" << std::endl;
+}
+
+void webserv::Poller::stop()
+{
+	std::cerr << "Poller: Stopping event loop" << std::endl;
+	m_running = false;
 }

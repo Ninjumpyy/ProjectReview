@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/19 10:49:40 by tle-moel          #+#    #+#             */
-/*   Updated: 2025/06/13 17:26:08 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/16 12:35:47 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,7 +171,7 @@ void webserv::Parser::decodePercentage(std::string& token)
 	{
 		if (token[i] == '%')
 		{
-			if (i + 2 < token.size())
+			if (i + 2 >= token.size())
 				throw HttpError(400);
 			char c = hexastringtoint(token.substr(i + 1, 2));
 			new_token.push_back(c);

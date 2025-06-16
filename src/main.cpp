@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/21 13:24:06 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/05/28 15:52:42 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/16 12:50:35 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,12 @@ int main(int argc, char** argv)
 {
 	try
 	{
-		if (argc  == 2)
+		if (argc != 2)
+		{
+			std::cerr << "Usage: " << argv[0] << " <config_file>" << std::endl;
+			return (1);
+		}
+		else
 		{
 			webserv::Config config(argv[1]);
 			config.parseConfig();

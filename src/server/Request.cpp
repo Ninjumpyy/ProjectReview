@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 17:28:07 by thomas            #+#    #+#             */
-/*   Updated: 2025/06/13 18:09:28 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/16 13:02:36 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,7 +119,7 @@ bool webserv::Request::parseFixedBody(int clientFd, ssize_t maxBodySize, size_t 
 	ssize_t bytesRead = recv(clientFd, buf, sizeof(buf), 0);
 	if (bytesRead <= 0)
 		throw HttpError(500); // Internal server error
-	m_body.append(buf);
+	m_body.append(buf, bytesRead);
 	if (m_body.size() > static_cast<size_t>(maxBodySize) || m_body.size() > content_length)
 		throw HttpError(413); // too large
 	if (m_body.size() == content_length)
@@ -133,7 +133,7 @@ bool webserv::Request::parseChunkedBody(int clientFd, ssize_t maxBodySize, size_
 	ssize_t bytesRead = recv(clientFd, buf, sizeof(buf), 0);
 	if (bytesRead <= 0)
 		throw HttpError(500); // Internal server error
-	m_buffer.append(buf);
+	m_buffer.append(buf, bytesRead);
 	
 	size_t pos;
 	int	nbytes;

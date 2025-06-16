@@ -6,7 +6,7 @@
 /*   By: rpandipe <rpandie@student.42luxembourg.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/22 15:30:25 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/14 00:54:10 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/14 09:39:59 by rpandipe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -200,6 +200,7 @@ void webserv::Config::parseServer()
 	expect(T_SERVER);
 	expect(T_LBRACE);
 	Server server;
+	server.max_body_size = 1024 * 1024;
 	while (peek().type != T_RBRACE)
 	{
 		TokenType tt = peek().type;
