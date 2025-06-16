@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 17:15:00 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/16 16:10:58 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/16 16:36:02 by rpandipe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -366,6 +366,7 @@ void webserv::ClientHandler::evaluateTransition(void)
 		std::string segment;
 		std::string pathInfo;
 		bool foundScript = false;
+		std::cerr << "CGI Extension " << cgiExtension << std::endl;
 
 		while (std::getline(ss, segment, '/')) 
 		{
@@ -389,13 +390,14 @@ void webserv::ClientHandler::evaluateTransition(void)
 				pathInfo += "/" + segment;
 			}
 		}
-
+		std::cerr << "Path info " << pathInfo << " Script name " << scriptName << std::endl;
 		if (foundScript) 
 		{
 			isCGI = true;
 			m_request.setPath(pathInfo); // pathInfo is the PATH_INFO
 			// scriptName is the CGI script path (URL)
 			// pathInfo is the PATH_INFO
+			std::cerr << "CGI is set true" << std::endl;
 		}
 	}	
 }

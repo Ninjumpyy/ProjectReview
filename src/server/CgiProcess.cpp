@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiProcess.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/02 14:10:02 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/16 16:23:18 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/16 16:28:44 by rpandipe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@ void webserv::CgiProcess::spawn()
 {
 	int fds1[2];
 	int fds2[2];
+	std::cerr << "Entering CGI" << std::endl;
 
 	if (pipe(fds1) < 0 || pipe(fds2))
 	{

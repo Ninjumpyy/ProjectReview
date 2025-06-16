@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   AcceptHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: thomas <thomas@student.42.fr>              +#+  +:+       +#+        */
+/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 16:22:13 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/13 13:03:27 by thomas           ###   ########.fr       */
+/*   Updated: 2025/06/16 16:41:50 by rpandipe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,8 @@ void webserv::AcceptHandler::onEvent(short revents)
 			int flag = fcntl(client_socket, F_GETFL, 0);
 			if (fcntl(client_socket, F_SETFL, flag | O_NONBLOCK) < 0)
 				throw(webserv::AcceptHandler::EventErrorException());
+			
+			std::cerr << "CLientfd is " << clientfd.getfd();
 			
 			webserv::IEventHandler *handler = new webserv::ClientHandler(clientfd, m_poller, m_config);
 			m_poller.add(clientfd.getfd(), POLLIN,  handler);

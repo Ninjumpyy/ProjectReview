@@ -6,7 +6,7 @@
 /*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 15:12:40 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/16 14:59:47 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/16 16:25:00 by rpandipe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -156,7 +156,7 @@ void webserv::Poller::run()
 				int fd = it->first;
 				std::cerr << "Poller: Timing out fd " << fd << std::endl;
 				remove(fd);
-				it = last_active.erase(it);
+				last_active.erase(it++);
 			}
 			else
 				++it;
