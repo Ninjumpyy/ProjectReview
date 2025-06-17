@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 17:10:43 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/17 14:56:03 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/17 15:21:26 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,6 @@ namespace webserv
 
 			Status m_status;
 			size_t m_headerOffset;
-			size_t m_bodyOffset;
 			int	m_fileFD;
 			std::string m_bodyBuffer;
 			bool m_bodyToSend;

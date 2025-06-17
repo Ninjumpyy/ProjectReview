@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 17:15:00 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/17 15:09:19 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/17 15:24:53 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 
 webserv::ClientHandler::ClientHandler(const Fd &listenfd, Poller &poller, std::vector<const webserv::Config::Server*> &config): 
 			m_fd(listenfd), m_poller(poller), m_upload(), m_request(config, m_upload), m_response(m_request), 
-			m_parser(m_request), m_config(config), m_status(PARSING_HEADER), m_headerOffset(0), m_bodyOffset(0), 
+			m_parser(m_request), m_config(config), m_status(PARSING_HEADER), m_headerOffset(0), 
 			m_fileFD(-1), m_bodyToSend(false), isCGI(false)
 {
 	std::cerr << "Client handler Details " << m_config[0]->name.size() << std::endl;
@@ -214,12 +214,11 @@ void webserv::ClientHandler::onEvent(short revents)
 					return;
 				}
 			}
-			
-			// *****
-			std::cerr << "ClientHandler: Header Sent :" << std::endl;
-			std::cerr << m_response.getResponseBuffer() << std::endl << std::endl;
-			// *****
-			m_response.getResponseBuffer().clear(); // Clear the response buffer after sending
+			else
+			{
+				m_response.getResponseBuffer().clear(); // Clear the response buffer after sending
+				m_headerOffset = 0; // Reset header offset
+			}
 		}
 		if (m_bodyToSend)
 		{
@@ -276,7 +275,6 @@ void webserv::ClientHandler::onEvent(short revents)
 				m_upload.reset();
 				m_status = PARSING_HEADER;
 				m_headerOffset = 0;
-				m_bodyOffset = 0;
 				m_bodyToSend = false;
 				m_fileFD = -1;
 				m_bodyBuffer.clear();
