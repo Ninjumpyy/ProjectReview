@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 17:28:45 by thomas            #+#    #+#             */
-/*   Updated: 2025/06/16 16:10:20 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/17 11:58:55 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,17 +57,19 @@ namespace webserv
 			const std::map<std::string, std::vector<std::string> > &getHeaders(void) const;
 			const webserv::Config::Server* getServerBlock(void) const;
 			const webserv::Config::LocationConfig* getLocationBlock(void) const;
+			const std::string& getScriptName(void) const;
 			const std::string& getPathInfo(void) const;
 
 			void setMethod(Method method);
 			void setPath(std::string path);
 			void setQuery(std::string query);
 			void setVersion(std::string version);
-			void setBody(std::string body);
+			//void setBody(std::string body);
 			void setHeader(std::string key, std::string value);
 			void setKeepAlive(bool);
 			void setServerBlock(const webserv::Config::Server* serverBlock);
 			void setLocationBlock(const webserv::Config::LocationConfig* locationBlock);
+			void setScriptName(const std::string& scriptName);
 			void setPathInfo(const std::string& pathInfo);
 			void setCookie(const std::string& name, const std::string& val);
 			std::string getCookie(const std::string& name) const;
@@ -98,7 +100,7 @@ namespace webserv
 			bool		m_keepAlive;
 
 			std::string m_pathInfo; // for CGI
-			//std::string m_scriptName; // for CGI
+			std::string m_scriptName; // for CGI
 
 			Request(const Request&);
 			Request& operator=(const Request&);

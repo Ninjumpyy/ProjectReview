@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/22 15:30:25 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/16 15:11:41 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/17 12:25:04 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -555,12 +555,20 @@ void webserv::Config::parseLocation(Server &server)
 				expect(T_SEMICOLON);
 				loc.cgiPass = cgiPass;
 				webserv::CgiProcess::CgiMapping cgi;
+				cgi.interpreter = cgiPass;
 				if (isRegex)
+				{
 					cgi.extension = loc.prefix;
+					loc.cgiextension = loc.prefix;
+				}
 				else
 				{
 					size_t pos = loc.cgiPass.find_last_of('.');
-					cgi.extension = loc.cgiPass.substr(pos + 1);
+					if (pos != std::string::npos)
+					{
+						cgi.extension = loc.cgiPass.substr(pos + 1);
+						loc.cgiextension = cgi.extension;
+					}	
 				}
 				std::cerr << "Adding CGI mapping for extension: " << cgi.extension << " interpreter is " << cgi.interpreter << std::endl;
 				server.cgi.push_back(cgi);

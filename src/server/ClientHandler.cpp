@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 17:15:00 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/16 16:36:02 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/17 12:08:31 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,9 +73,10 @@ void webserv::ClientHandler::onEvent(short revents)
 						sid = SessionManager::createSession();
 						m_response.addCookie("SESSIONID", sid);
 					}
-				SessionManager::getSession(sid);
+					SessionManager::getSession(sid);
 					if (m_status != REDIRECTION)
 						evaluateTransition(); // Set m_status based on request
+					std::cerr << "POLLIN tasks successful" << std::endl;
 				}	
 				else
 				{
@@ -114,7 +115,6 @@ void webserv::ClientHandler::onEvent(short revents)
 					{
 						if (m_request.parseChunkedBody(m_fd.getfd(), m_upload.getMaxBodySize(), m_upload.getContentLength()))
 						{
-							computePath();
 							CgiProcess * process = new CgiProcess(m_request.getServerBlock()->cgi[0], m_request.getPath(), m_request, m_response);
 							process->spawn();
 							m_poller.modify(m_fd.getfd(), POLLOUT);
@@ -125,7 +125,6 @@ void webserv::ClientHandler::onEvent(short revents)
 					{
 						if (m_request.parseFixedBody(m_fd.getfd(), m_upload.getMaxBodySize(), m_upload.getContentLength()))
 						{
-							computePath();
 							CgiProcess * process = new CgiProcess(m_request.getServerBlock()->cgi[0], m_request.getPath(), m_request, m_response);
 							process->spawn();
 							m_poller.modify(m_fd.getfd(), POLLOUT);
@@ -156,8 +155,17 @@ void webserv::ClientHandler::onEvent(short revents)
 			}
 			if (m_status == COMPLETE)
 			{
-				prepareResponse();
-				m_poller.modify(m_fd.getfd(), POLLOUT);
+				if (isCGI)
+				{
+					CgiProcess * process = new CgiProcess(m_request.getServerBlock()->cgi[0], m_request.getPath(), m_request, m_response);
+					process->spawn();
+					m_poller.modify(m_fd.getfd(), POLLOUT);
+				}
+				else
+				{
+					prepareResponse();
+					m_poller.modify(m_fd.getfd(), POLLOUT);
+				}
 			}
 		}
 		catch (const HttpError& err)
@@ -276,7 +284,7 @@ void webserv::ClientHandler::cleanup()
 void webserv::ClientHandler::checkServerAndLocation()
 {
 	if (!m_request.getLocationBlock() && m_request.getServerBlock()->root.empty())
-		throw HttpError(404); //Not Found
+		throw HttpError(400); // Bad Request, no root set for server
 	if (m_request.getServerBlock()->max_body_size)
 		m_upload.setMaxBodySize(m_request.getServerBlock()->max_body_size);
 		
@@ -301,6 +309,7 @@ void webserv::ClientHandler::checkServerAndLocation()
 				throw HttpError(405); //Method not allowed
 		}
 	}
+	std::cerr << "out of check server and location" << std::endl;
 }
 
 void webserv::ClientHandler::evaluateTransition(void)
@@ -357,50 +366,55 @@ void webserv::ClientHandler::evaluateTransition(void)
 		findTypeOfUpload(headers["content-type"][0]);
 	}
 
+	//CGI preparation before processing
 	if (m_request.getLocationBlock() && !m_request.getLocationBlock()->cgiPass.empty())
 	{
-		size_t pos = m_request.getLocationBlock()->cgiPass.find_last_of('.');
-		std::string cgiExtension = m_request.getLocationBlock()->cgiPass.substr(pos);
-		std::stringstream ss(m_request.getPath());
 		std::string scriptName;
-		std::string segment;
 		std::string pathInfo;
-		bool foundScript = false;
-		std::cerr << "CGI Extension " << cgiExtension << std::endl;
 
-		while (std::getline(ss, segment, '/')) 
+		if (m_request.getLocationBlock()->prefix[0] == '/')
 		{
-			if (!segment.empty() && !foundScript) 
+			computePath(); // compute the filesystem path based on the request path and location prefix
+			std::string uri = m_request.getPath();
+
+			std::string candidate;
+			for (size_t i = 1; i <= uri.size(); ++i)
 			{
-				size_t dot = segment.find_last_of('.');
-				if (dot != std::string::npos) 
+				if (i < uri.size() && uri[i] != '/')
+					continue;
+
+				candidate = uri.substr(0, i);
+				struct stat s;
+				if (stat(candidate.c_str(), &s) == 0 && S_ISREG(s.st_mode))
 				{
-					std::string ext = segment.substr(dot);
-					if (!cgiExtension.empty()) 
-					{
-						scriptName += segment;
-						foundScript = true;
-						continue;
-					}
+					scriptName = candidate;
 				}
-				scriptName += segment + "/";
-			} 
-			else if (foundScript) 
-			{
-				pathInfo += "/" + segment;
 			}
+			if (scriptName.empty())
+				throw HttpError(404); // Not Found, no CGI script found
+			pathInfo = uri.substr(scriptName.size());
 		}
-		std::cerr << "Path info " << pathInfo << " Script name " << scriptName << std::endl;
-		if (foundScript) 
+		else if (m_request.getLocationBlock()->prefix[0] == '.') // Regex
 		{
-			isCGI = true;
-			m_request.setPath(pathInfo); // pathInfo is the PATH_INFO
-			// scriptName is the CGI script path (URL)
-			// pathInfo is the PATH_INFO
-			std::cerr << "CGI is set true" << std::endl;
+			std::string uri = m_request.getPath();
+			std::string extension = m_request.getLocationBlock()->cgiextension;
+			size_t pos = uri.find(extension);
+			if (pos == std::string::npos)
+				throw HttpError(404); // Not Found, no CGI script found
+			scriptName = uri.substr(0, pos + extension.size());
+			pathInfo = uri.substr(pos + extension.size());
 		}
-	}	
+		else
+		{
+			std::cerr << "ClientHandler: Location prefix is not valid" << std::endl;
+			throw HttpError(400); // Bad Request, invalid location prefix
+		}
+		isCGI = true;
+		m_request.setScriptName(scriptName); // scriptName is the CGI script path (URL)
+		m_request.setPathInfo(pathInfo); // pathInfo is the PATH_INFO
+	}
 }
+
 
 void webserv::ClientHandler::prepareResponse()
 {
@@ -510,7 +524,7 @@ void webserv::ClientHandler::computePath()
 
 	if (locationBlock)
 	{
-		std::cerr << "Location Block is " << locationBlock->prefix << " root is " << (locationBlock->root.empty() ? true : false) << std::endl;
+		std::cerr << "Location Block is " << locationBlock->prefix << " root is " << (locationBlock->root.empty() ? true : false)  << " reqpath is " << reqPath << std::endl;
 		std::string prefix = locationBlock->prefix;
 		if (reqPath == prefix) // prefix exactly matches the request path (so we look for an index file under the loc alias/root)
 			remaining = "/";

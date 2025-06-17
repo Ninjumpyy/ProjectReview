@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: rpandipe <rpandie@student.42luxembourg.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/19 04:04:58 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/05 10:37:58 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/17 02:47:45 by rpandipe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,7 @@
 #include <iostream>
 
 webserv::Socket::Socket(const char *host, int port, std::vector<const webserv::Config::Server*> config):
-	m_sock(::socket(AF_INET, SOCK_STREAM, 0)), m_config(config),
-	m_acceptor(m_sock, webserv::Poller::getInstance(), m_config)
+	m_sock(::socket(AF_INET, SOCK_STREAM, 0)), m_config(config)
 {	
 	std::cerr << "Socket: Creating socket" << std::endl;
 	std::cerr << "Server Details " << config[0]->name.size() << std::endl;
@@ -54,6 +53,7 @@ webserv::Socket::Socket(const char *host, int port, std::vector<const webserv::C
 	if(::bind(m_sock.getfd(), reinterpret_cast<const sockaddr*>(&m_address), sizeof(m_address)) < 0 )
 			throw(webserv::Socket::SocketNotCreatedException());
 	std::cerr << "Socket: Successfully bound to port " << port << std::endl;
+	m_acceptor = new webserv::AcceptHandler(m_sock, webserv::Poller::getInstance(), m_config);
 }
 
 webserv::Socket::~Socket()

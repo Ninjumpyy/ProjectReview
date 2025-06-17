@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiProcess.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/02 14:10:02 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/16 16:28:44 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/17 12:20:11 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,8 @@ void webserv::CgiProcess::spawn()
 		std::ostringstream oss;
 		oss << m_request.getExpectedLength();
 		envstr.push_back("CONTENT_LENGTH=" + oss.str());
+		if (!m_request.getScriptName().empty())
+			envstr.push_back("SCRIPT_NAME=" + m_request.getScriptName());
 		if (!m_request.getPathInfo().empty())
 			envstr.push_back("PATH_INFO=" + m_request.getPathInfo());
 		

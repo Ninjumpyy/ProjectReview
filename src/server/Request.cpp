@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 17:28:07 by thomas            #+#    #+#             */
-/*   Updated: 2025/06/16 16:21:50 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/17 12:16:31 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,11 @@ const webserv::Config::LocationConfig* webserv::Request::getLocationBlock(void) 
 	return (m_locationBlock);
 }
 
+const std::string& webserv::Request::getScriptName(void) const
+{
+	return (m_scriptName);
+}
+
 const std::string& webserv::Request::getPathInfo(void) const
 {
 	return (m_pathInfo);
@@ -81,6 +86,8 @@ void webserv::Request::setMethod(Method method)
 
 void webserv::Request::setPath(std::string path)
 {
+	std::cerr << "----------------------------------------------------------------------------------------------------------------" << std::endl;
+	std::cerr << "m_path is set " << path << " <- Path" << std::endl;
 	m_path = path;
 }
 
@@ -112,6 +119,11 @@ void webserv::Request::setServerBlock(const webserv::Config::Server* serverBlock
 void webserv::Request::setLocationBlock(const webserv::Config::LocationConfig* locationBlock)
 {
 	m_locationBlock = locationBlock;
+}
+
+void webserv::Request::setScriptName(const std::string& scriptName)
+{
+	m_scriptName = scriptName;
 }
 
 void webserv::Request::setPathInfo(const std::string& pathInfo)
@@ -185,6 +197,7 @@ void webserv::Request::clearForNextRequest(void)
 	m_headers.clear();
 	m_serverBlock = NULL;
 	m_locationBlock = NULL;
+	m_scriptName.clear();
 	m_pathInfo.clear();
 }
 
@@ -258,8 +271,35 @@ void webserv::Request::selectLocationBlock()
 	for (size_t i = 0; i < m_serverBlock->locations.size(); ++i)
 	{
 		const std::string & prefix = m_serverBlock->locations[i].prefix;
+		
+		size_t prefixLen = prefix.size();
+		std::cerr << "Path is " << m_path << " prefix is " << prefix <<std::endl; 
+		if (m_path.size() < prefixLen)
+			continue;
+		
+		if (m_path.compare(0, prefixLen, prefix) == 0)
+		{
+			if (m_path.size() == prefixLen)
+			{
+				locationBlock = &m_serverBlock->locations[i];
+				break ;
+			}
+			if (prefix == "/" || m_path[prefixLen] == '/' || prefix[prefixLen - 1] == '/')
+			{
+				if (prefixLen > bestLen)
+				{
+					locationBlock = &m_serverBlock->locations[i];
+					bestLen = prefixLen;
+				}
+				
+			}
+		}
+	}
+	for (size_t i = 0; i < m_serverBlock->locations.size(); ++i)
+	{
+		const std::string & prefix = m_serverBlock->locations[i].prefix;
 
-		if (prefix[0] == '.') //REGEX location: match extension
+		if (prefix[0] == '.') // Regex location
 		{
 			if (m_path.size() >= prefix.size() && m_path.compare(m_path.size() - prefix.size(), prefix.size(), prefix) == 0)
 			{
@@ -268,32 +308,8 @@ void webserv::Request::selectLocationBlock()
 				break ;
 			}
 		}
-		else
-		{
-			size_t prefixLen = prefix.size();
-			std::cerr << "Path is " << m_path << " prefix is " << prefix <<std::endl; 
-			if (m_path.size() < prefixLen)
-				continue;
-			
-			if (m_path.compare(0, prefixLen, prefix) == 0)
-			{
-				if (m_path.size() == prefixLen)
-				{
-					locationBlock = &m_serverBlock->locations[i];
-					break ;
-				}
-				if (prefix == "/" || m_path[prefixLen] == '/' || prefix[prefixLen - 1] == '/')
-				{
-					if (prefixLen > bestLen)
-					{
-						locationBlock = &m_serverBlock->locations[i];
-						bestLen = prefixLen;
-					}
-					
-				}
-			}
-		}
 	}
+
 	m_locationBlock = locationBlock;
 	if (locationBlock == NULL)
 		std::cerr << "Location block  is null" << std::endl;

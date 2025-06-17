@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   AcceptHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: rpandipe <rpandie@student.42luxembourg.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 16:22:13 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/16 16:41:50 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/17 02:29:48 by rpandipe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ webserv::AcceptHandler::AcceptHandler(Fd &listenfd, Poller &poller, std::vector<
 webserv::AcceptHandler::~AcceptHandler()
 {
 	std::cerr << "AcceptHandler: Destructor called" << std::endl;
-	m_poller.remove(m_fd.getfd());
+	//m_poller.remove(m_fd.getfd());
 }
 
 void webserv::AcceptHandler::onEvent(short revents)

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: rpandipe <rpandie@student.42luxembourg.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/19 04:05:04 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/05 10:37:34 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/17 02:47:36 by rpandipe         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ namespace webserv
 			webserv::Fd m_sock;
 			std::vector<const webserv::Config::Server*> m_config;
 			struct sockaddr_in m_address;
-			webserv::AcceptHandler m_acceptor;
+			webserv::AcceptHandler *m_acceptor;
 
 			Socket();
 			Socket(const Socket &);

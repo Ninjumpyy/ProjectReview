@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/22 15:07:44 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/16 13:45:09 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/17 11:08:22 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ namespace webserv
 				bool           autoindex;
 				std::vector<std::string> indexFiles;
 				std::string    cgiPass;
+				std::string	   cgiextension;
 				std::string    uploadStore;
 
 				LocationConfig()
@@ -51,6 +52,7 @@ namespace webserv
 					, autoindex(false)
 					, indexFiles()
 					, cgiPass()
+					, cgiextension()
 					, uploadStore()
 					{}
 			};
