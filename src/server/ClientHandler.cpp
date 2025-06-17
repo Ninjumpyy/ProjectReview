@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 17:15:00 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/17 12:08:31 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/17 15:09:19 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,10 +52,13 @@ void webserv::ClientHandler::onEvent(short revents)
 	}
 	if (revents & POLLIN)
 	{
+		std::cerr << "ClientHandler: POLLIN event received" << std::endl;
 		try
 		{
 			if (m_status == PARSING_HEADER)
 			{
+				std::cerr << "ClientHandler: Parsing headers" << std::endl;
+				
 				char buf[1024];
 				ssize_t bytesRead = recv(m_fd.getfd(), buf, sizeof(buf), 0);
 				if (bytesRead > 0)
@@ -88,18 +91,21 @@ void webserv::ClientHandler::onEvent(short revents)
 			if (m_status == EXPECT_CONTINUE)
 			{
 				std::cerr << "ClientHandler: catch Expect-Continue" << std::endl;
+
 				m_response.buildErrorMessage(100); //Expect Continue
 				m_poller.modify(m_fd.getfd(), POLLOUT);
 			}
 			if (m_status == EXPECT_FAILED)
 			{
 				std::cerr << "ClientHandler: catch Expection-Failed" << std::endl;
+
 				m_response.buildErrorMessage(417); //Expect Error
 				m_poller.modify(m_fd.getfd(), POLLOUT);
 			}
 			if (m_status == REDIRECTION)
 			{
 				std::cerr << "ClientHandler: Redirection" << std::endl;
+
 				m_response.buildRedirection();
 				m_poller.modify(m_fd.getfd(), POLLOUT);
 			}
@@ -110,12 +116,17 @@ void webserv::ClientHandler::onEvent(short revents)
 
 				if (isCGI)
 				{
-					std::cerr << "ClientHandler: CGI" << std::endl;
+					std::cerr << "ClientHandler: CGI: Retrieving the body" << std::endl;
 					if (m_upload.isChunked())
 					{
+						std::cerr << "ClientHandler: CGI: Chunked body detected" << std::endl;
+						
 						if (m_request.parseChunkedBody(m_fd.getfd(), m_upload.getMaxBodySize(), m_upload.getContentLength()))
 						{
 							CgiProcess * process = new CgiProcess(m_request.getServerBlock()->cgi[0], m_request.getPath(), m_request, m_response);
+
+							std::cerr << "ClientHandler: CGI: Spawning process" << std::endl;
+
 							process->spawn();
 							m_poller.modify(m_fd.getfd(), POLLOUT);
 						}
@@ -123,9 +134,14 @@ void webserv::ClientHandler::onEvent(short revents)
 					}
 					if (m_upload.isFixed())
 					{
+						std::cerr << "ClientHandler: CGI: Fixed body detected" << std::endl;
+
 						if (m_request.parseFixedBody(m_fd.getfd(), m_upload.getMaxBodySize(), m_upload.getContentLength()))
 						{
 							CgiProcess * process = new CgiProcess(m_request.getServerBlock()->cgi[0], m_request.getPath(), m_request, m_response);
+
+							std::cerr << "ClientHandler: CGI: Spawning process" << std::endl;
+
 							process->spawn();
 							m_poller.modify(m_fd.getfd(), POLLOUT);
 						}
@@ -134,6 +150,8 @@ void webserv::ClientHandler::onEvent(short revents)
 				}
 				else if (m_request.getMethod() == "POST")
 				{
+					std::cerr << "ClientHandler: POST request detected" << std::endl;
+
 					if (m_upload.getUploadStore().empty())
 						findUploadStore();
 					if (m_upload.handlePost(m_fd.getfd()))
@@ -157,7 +175,10 @@ void webserv::ClientHandler::onEvent(short revents)
 			{
 				if (isCGI)
 				{
+					std::cerr << "ClientHandler: CGI: GET or HEAD" << std::endl;
+
 					CgiProcess * process = new CgiProcess(m_request.getServerBlock()->cgi[0], m_request.getPath(), m_request, m_response);
+					std::cerr << "ClientHandler: CGI: Spawning process" << std::endl;
 					process->spawn();
 					m_poller.modify(m_fd.getfd(), POLLOUT);
 				}
@@ -178,7 +199,7 @@ void webserv::ClientHandler::onEvent(short revents)
 	{
 		if (!m_response.getResponseBuffer().empty())
 		{
-			while (m_headerOffset < m_response.getResponseBuffer().size())
+			if (m_headerOffset < m_response.getResponseBuffer().size())
 			{
 				ssize_t sent = ::send(m_fd.getfd(), m_response.getResponseBuffer().c_str() + m_headerOffset, m_response.getResponseBuffer().size() - m_headerOffset, 0);
 				if (sent > 0)
@@ -202,38 +223,33 @@ void webserv::ClientHandler::onEvent(short revents)
 		}
 		if (m_bodyToSend)
 		{
-			char buf[16*1024];
-			ssize_t nbytes = read(m_fileFD, buf, sizeof(buf));
-			if (nbytes > 0)
+			if (!m_bodyBuffer.empty())
 			{
-				while (m_bodyOffset < static_cast<size_t>(nbytes))
+				ssize_t sent = ::send(m_fd.getfd(), m_bodyBuffer.c_str(), m_bodyBuffer.size(), 0);
+				if (sent > 0)
 				{
-					ssize_t sent = ::send(m_fd.getfd(), buf + m_bodyOffset, nbytes - m_bodyOffset, 0);
-					if (sent > 0)
-					{
-						std::cerr << "ClientHandler: Body Sent " << sent << " bytes" << std::endl;
-						m_bodyOffset += static_cast<size_t>(sent);
-					}
-					else //non-blocking soket send <= 0 is fatal
-					{
-						std::cerr << "Non-blocking soket send <= 0 is fatal" << std::endl;
-						cleanup();
-						return;
-					}
+					m_bodyBuffer.erase(0, static_cast<size_t>(sent)); // Remove sent bytes from buffer
+					std::cerr << "ClientHandler: Body Sent " << sent << " bytes" << std::endl;
 				}
-
-				// *****
-				std::cerr << "ClientHandler: Body Chunk Sent :" << std::endl;
-				std::cerr << buf << std::endl << std::endl;
-				// *****
-
-				m_bodyOffset = 0; //sent total chunk, reset for next chunk
+				else //non-blocking soket send <= 0 is fatal
+				{
+					std::cerr << "Non-blocking soket send <= 0 is fatal" << std::endl;
+					cleanup();
+					return;
+				}
 			}
 			else
 			{
-				//EOF or error
-				::close(m_fileFD);
-				m_bodyToSend = false;
+				char buf[16*1024];
+				ssize_t nbytes = read(m_fileFD, buf, sizeof(buf));
+				if (nbytes > 0)
+					m_bodyBuffer.append(buf, nbytes);
+				else
+				{
+					//EOF or error
+					::close(m_fileFD);
+					m_bodyToSend = false;
+				}
 			}
 		}
 		if (m_response.getResponseBuffer().empty() && !m_bodyToSend)
@@ -263,6 +279,7 @@ void webserv::ClientHandler::onEvent(short revents)
 				m_bodyOffset = 0;
 				m_bodyToSend = false;
 				m_fileFD = -1;
+				m_bodyBuffer.clear();
 				m_poller.modify(m_fd.getfd(), POLLIN);
 			}
 		}
@@ -283,17 +300,27 @@ void webserv::ClientHandler::cleanup()
 
 void webserv::ClientHandler::checkServerAndLocation()
 {
+	std::cerr << "Checking server and location blocks" << std::endl;
+
 	if (!m_request.getLocationBlock() && m_request.getServerBlock()->root.empty())
 		throw HttpError(400); // Bad Request, no root set for server
 	if (m_request.getServerBlock()->max_body_size)
+	{
+		std::cerr << "Setting max body size for upload: " << m_request.getServerBlock()->max_body_size << std::endl;
 		m_upload.setMaxBodySize(m_request.getServerBlock()->max_body_size);
+	}
 		
 	if (m_request.getLocationBlock() && m_request.getLocationBlock()->hasRedirect)
+	{
+		std::cerr << "Location block has a redirection" << std::endl;
 		m_status = REDIRECTION;
+	}
 	else
 	{
 		if (m_request.getLocationBlock() && !m_request.getLocationBlock()->methods.empty())
 		{
+			std::cerr << "Checking allowed methods for location block" << std::endl;
+			
 			std::vector<std::string>::const_iterator it;
 			for (it = m_request.getLocationBlock()->methods.begin(); it != m_request.getLocationBlock()->methods.end(); ++it)
 			{
@@ -301,19 +328,27 @@ void webserv::ClientHandler::checkServerAndLocation()
 					break;
 			}
 			if (it == m_request.getLocationBlock()->methods.end())
+			{
+				std::cerr << "Method not allowed for this location" << std::endl;
 				throw HttpError(405); //Method not allowed
+			}
 		}
 		if (m_request.getMethod() == "POST") // POST need a locationBlock with an uploadStore set
 		{
 			if (!m_request.getLocationBlock() || m_request.getLocationBlock()->uploadStore.empty())
-				throw HttpError(405); //Method not allowed
+			{	
+				std::cerr << "POST method requires a location block with an upload store" << std::endl;
+				throw HttpError(405); //Method not allowed}
+			}
 		}
+		std::cerr << "Server and Location checked" << std::endl;
 	}
-	std::cerr << "out of check server and location" << std::endl;
 }
 
 void webserv::ClientHandler::evaluateTransition(void)
 {
+	std::cerr << "Evaluating transition based on request method and headers" << std::endl;
+
 	std::map<std::string, std::vector<std::string> > headers = m_request.getHeaders();
 	bool CL = headers.count("content-length");
 	bool TE = headers.count("transfer-encoding");
@@ -324,13 +359,19 @@ void webserv::ClientHandler::evaluateTransition(void)
 	{
 		// GET must not have a body → so Content-Length or Transfer-Encoding or Expect are not allowed
 		if (CL || TE || EX)
+		{
+			std::cerr << "ERROR : GET or HEAD request with invalid headers" << std::endl;
 			throw HttpError(400);
+		}
 		m_status = COMPLETE;
 	}
 	else if (m_request.getMethod() == "POST" || m_request.getMethod() == "DELETE")
 	{
 		if (!(CL ^ TE))
+		{
+			std::cerr << "ERROR : CL and TE both present" << std::endl;
 			throw HttpError(400);
+		}
 		if (!(CL || TE)) // There is no body to read
 		{
 			if (EX)
@@ -345,7 +386,10 @@ void webserv::ClientHandler::evaluateTransition(void)
 			{
 				// Check if it is a valid Expect header
 				if (headers["expect"].size() != 1 || headers["expect"][0] != "100-continue")
+				{
+					std::cerr << "ERROR : Invalid Expect header" << std::endl;
 					throw HttpError(400);
+				}
 				m_status = EXPECT_CONTINUE;
 			}
 			else //Client don't expect a response, body is ready to be read
@@ -369,11 +413,15 @@ void webserv::ClientHandler::evaluateTransition(void)
 	//CGI preparation before processing
 	if (m_request.getLocationBlock() && !m_request.getLocationBlock()->cgiPass.empty())
 	{
+		std::cerr << "ClientHandler: CGI preparation before processing" << std::endl;
+
 		std::string scriptName;
 		std::string pathInfo;
 
 		if (m_request.getLocationBlock()->prefix[0] == '/')
 		{
+			std::cerr << "ClientHandler: Location prefix is a path" << std::endl;
+
 			computePath(); // compute the filesystem path based on the request path and location prefix
 			std::string uri = m_request.getPath();
 
@@ -396,6 +444,8 @@ void webserv::ClientHandler::evaluateTransition(void)
 		}
 		else if (m_request.getLocationBlock()->prefix[0] == '.') // Regex
 		{
+			std::cerr << "ClientHandler: Location prefix is a regex" << std::endl;
+
 			std::string uri = m_request.getPath();
 			std::string extension = m_request.getLocationBlock()->cgiextension;
 			size_t pos = uri.find(extension);
@@ -410,6 +460,8 @@ void webserv::ClientHandler::evaluateTransition(void)
 			throw HttpError(400); // Bad Request, invalid location prefix
 		}
 		isCGI = true;
+		std::cerr << "ClientHandler: CGI script name is " << scriptName << std::endl;
+		std::cerr << "ClientHandler: CGI path info is " << pathInfo << std::endl;
 		m_request.setScriptName(scriptName); // scriptName is the CGI script path (URL)
 		m_request.setPathInfo(pathInfo); // pathInfo is the PATH_INFO
 	}
@@ -419,12 +471,16 @@ void webserv::ClientHandler::evaluateTransition(void)
 void webserv::ClientHandler::prepareResponse()
 {
 	std::cerr << "Starting to prepare response" << std::endl;
+	
 	if (m_request.getMethod() == "GET" || m_request.getMethod() == "HEAD")
 	{
+		std::cerr << "ClientHandler: prepare response GET or HEAD request" << std::endl;
+
 		computePath();
 		struct stat st;
 		if (stat(m_request.getPath().c_str(), &st) < 0)
 		{
+			std::cerr << "ClientHandler: Error while checking file status" << std::endl;
 			if (errno == ENOENT) 
 				m_response.buildErrorMessage(404); //Not Found
 			else if (errno == EACCES) 
@@ -436,6 +492,7 @@ void webserv::ClientHandler::prepareResponse()
 		else if (S_ISREG(st.st_mode))
 		{
 			std::cerr << "ClientHandler: Target is a regular file" << std::endl;
+
 			m_fileFD = open(m_request.getPath().c_str(), O_RDONLY);
 			if (m_fileFD < 0)
 			{
@@ -449,6 +506,7 @@ void webserv::ClientHandler::prepareResponse()
 		else if (S_ISDIR(st.st_mode))
 		{
 			std::cerr << "ClientHandler: Target is a directory" << std::endl;
+
 			if (serveDefaultFile())
 			{
 				std::cerr << "There is a default file" << std::endl;
@@ -467,6 +525,7 @@ void webserv::ClientHandler::prepareResponse()
 			else
 			{
 				std::cerr << "There is no default file" << std::endl;
+				
 				if (m_request.getLocationBlock() && m_request.getLocationBlock()->autoindex)
 					generateAutoIndex();
 				else
@@ -483,6 +542,8 @@ void webserv::ClientHandler::prepareResponse()
 	}
 	else if (m_request.getMethod() == "DELETE")
 	{
+		std::cerr << "ClientHandler: prepare response DELETE request" << std::endl;
+
 		computePath();
 		struct stat st;
 		if (stat(m_request.getPath().c_str(), &st) < 0)
@@ -513,6 +574,8 @@ void webserv::ClientHandler::prepareResponse()
 
 void webserv::ClientHandler::computePath()
 {
+	std::cerr << "Enter computePath" << std::endl;
+
 	const webserv::Config::LocationConfig* locationBlock = m_request.getLocationBlock();
 	if (locationBlock)
 		std::cerr << "CH : Location Block is " << locationBlock->prefix << std::endl;
@@ -587,6 +650,7 @@ bool webserv::ClientHandler::serveDefaultFile()
 void webserv::ClientHandler::generateAutoIndex()
 {
 	std::cerr << "Enter generateAutoIndex" << std::endl;
+	
 	DIR* dirp = opendir(m_request.getPath().c_str());
 	if (dirp == NULL)
 	{
@@ -633,6 +697,8 @@ void webserv::ClientHandler::generateAutoIndex()
 
 void webserv::ClientHandler::findUploadStore()
 {
+	std::cerr << "Entering find upload store" << std::endl;
+
 	std::string uploadStore = m_request.getLocationBlock()->uploadStore; //if arrive here, there is a location and upload store is not empty.
 	// Create the directory path to store the uploaded file(s)
 	if (uploadStore[0] != '/')
@@ -663,18 +729,26 @@ void webserv::ClientHandler::findUploadStore()
 	//Check directory exists and is writable
 	struct stat st;
 	if (stat(uploadStore.c_str(), &st) < 0 || !S_ISDIR(st.st_mode) || access(uploadStore.c_str(), W_OK) < 0) // The upload directory should exist when the server is running
+	{
+		std::cerr << "Upload store directory does not exist or is not writable: " << uploadStore << std::endl;
 		throw HttpError(500);
+	}
+	std::cerr << "Upload store directory is valid: " << uploadStore << std::endl;
 	m_upload.setUploadStore(uploadStore);
 }
 
 void webserv::ClientHandler::findTypeOfUpload(std::string &value)
 {
+	std::cerr << "Finding type of upload from content-type header: " << value << std::endl;
+
 	std::string boundary;
 	
 	if (value.empty())
 		throw HttpError(415); //Unsupported Media Type
 	else if (value == "application/octet-stream")
 	{
+		std::cerr << "Content-Type is application/octet-stream, setting raw upload" << std::endl;
+
 		m_upload.setRaw(true);
 		return ;
 	}
@@ -705,9 +779,15 @@ void webserv::ClientHandler::findTypeOfUpload(std::string &value)
 		if (boundary.empty())
 			throw HttpError(415); // Unsupported Media Type
 		m_upload.setMultipart(true);
+
+		std::cerr << "Content-Type is multipart/form-data with boundary: " << boundary << std::endl;
+
 		m_upload.setBoundary(boundary);
 		return ;
 	}
 	else
+	{
+		std::cerr << "Unsupported Content-Type: " << value << std::endl;
 		throw HttpError(415); // Unsupported Media Type
+	}
 }

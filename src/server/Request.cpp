@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/12 17:28:07 by thomas            #+#    #+#             */
-/*   Updated: 2025/06/17 12:16:31 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/17 14:06:10 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -236,6 +236,8 @@ void webserv::Request::validateRequest(void)
 
 void webserv::Request::selectServerBlock()
 {
+	std::cerr << "selectServerBlock called" << std::endl;
+
 	std::map<std::string,std::vector<std::string> >::const_iterator it = m_headers.find("host");
 	std::string host = it->second[0]; //I'm sure from parsing that there is at least one host header, with only one entry for the value
 	std::cerr << "host:" << host << std::endl;
@@ -261,19 +263,23 @@ void webserv::Request::selectServerBlock()
 		}
 	}
 	m_serverBlock = m_config.front();
+	std::cerr << "Server block selected" << std::endl;
 }
 
 void webserv::Request::selectLocationBlock()
 {
+	std::cerr << "selectLocationBlock called" << std::endl;
+
 	const webserv::Config::LocationConfig* locationBlock = NULL;
 	size_t bestLen = 0;
 
 	for (size_t i = 0; i < m_serverBlock->locations.size(); ++i)
 	{
+		std::cerr << "Checking location block with prefix: " << m_serverBlock->locations[i].prefix << std::endl;
+		
 		const std::string & prefix = m_serverBlock->locations[i].prefix;
 		
 		size_t prefixLen = prefix.size();
-		std::cerr << "Path is " << m_path << " prefix is " << prefix <<std::endl; 
 		if (m_path.size() < prefixLen)
 			continue;
 		
@@ -282,6 +288,7 @@ void webserv::Request::selectLocationBlock()
 			if (m_path.size() == prefixLen)
 			{
 				locationBlock = &m_serverBlock->locations[i];
+				std::cerr << "Found exact match location block with prefix: " << prefix << std::endl;
 				break ;
 			}
 			if (prefix == "/" || m_path[prefixLen] == '/' || prefix[prefixLen - 1] == '/')
@@ -289,6 +296,7 @@ void webserv::Request::selectLocationBlock()
 				if (prefixLen > bestLen)
 				{
 					locationBlock = &m_serverBlock->locations[i];
+					std::cerr << "Found location block with prefix: " << prefix << std::endl;
 					bestLen = prefixLen;
 				}
 				
@@ -301,6 +309,8 @@ void webserv::Request::selectLocationBlock()
 
 		if (prefix[0] == '.') // Regex location
 		{
+			std::cerr << "Checking regex location block with prefix: " << m_serverBlock->locations[i].prefix << std::endl;
+			
 			if (m_path.size() >= prefix.size() && m_path.compare(m_path.size() - prefix.size(), prefix.size(), prefix) == 0)
 			{
 				locationBlock = &m_serverBlock->locations[i];
@@ -314,7 +324,7 @@ void webserv::Request::selectLocationBlock()
 	if (locationBlock == NULL)
 		std::cerr << "Location block  is null" << std::endl;
 	else
-		std::cerr << "Location block is " << locationBlock->prefix << std::endl;
+		std::cerr << "FINALE LOCATION BLOCK : " << locationBlock->prefix << std::endl;
 		
 }
 

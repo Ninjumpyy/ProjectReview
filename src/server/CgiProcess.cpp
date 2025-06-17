@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/02 14:10:02 by rpandipe          #+#    #+#             */
-/*   Updated: 2025/06/17 12:20:11 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/17 14:35:39 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,7 +109,7 @@ void webserv::CgiProcess::spawn()
 		argv.push_back(NULL);
 
 		std::string script_dir;
-		for(size_t i = m_script.size(); i > 0; i--)
+		for(size_t i = m_script.size() - 1; i > 0; i--)
 		{
 			if (m_script[i] == '/')
 			{

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Upload.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rpandipe <rpandipe.student.42luxembourg    +#+  +:+       +#+        */
+/*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/10 17:11:30 by thomas            #+#    #+#             */
-/*   Updated: 2025/06/13 17:05:53 by rpandipe         ###   ########.fr       */
+/*   Updated: 2025/06/17 14:30:09 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,6 +103,8 @@ void webserv::Upload::reset(void)
 
 bool webserv::Upload::handlePost(int clientFd)
 {
+	std::cerr << "Handling POST request for upload" << std::endl;
+
 	if (m_upState == UP_UNSET) 
 		initializeUpload();
 
@@ -190,6 +192,8 @@ bool webserv::Upload::handlePost(int clientFd)
 
 void webserv::Upload::initializeUpload(void)
 {
+	std::cerr << "Initializing upload" << std::endl;
+
 	if (m_is_raw)
 		m_upState = UP_RAW_STREAMING;
 	else if (m_is_multipart)
@@ -215,6 +219,8 @@ void webserv::Upload::initializeUpload(void)
 
 void webserv::Upload::initializeDelete(void)
 {
+	std::cerr << "Initializing delete upload" << std::endl;
+
 	m_upState = UP_DELETION;
 	if (m_is_chunked)
 		m_chunkState = CHUNKED_PART;
@@ -222,6 +228,8 @@ void webserv::Upload::initializeDelete(void)
 
 std::string webserv::Upload::createTempFileName(std::string dir)
 {
+	std::cerr << "Creating temporary file name in directory: " << dir << std::endl;
+
 	static unsigned uniqueCounter = 0;
 	++uniqueCounter;
 	
@@ -232,11 +240,12 @@ std::string webserv::Upload::createTempFileName(std::string dir)
 	oss << ".upload_" << uniqueCounter << ".tmp";
 	m_currentFilename = oss.str();
 	return (oss.str());
-	
 }
 
 void webserv::Upload::renameFile(const std::string& newName)
 {
+	std::cerr << "Renaming file to " << newName << std::endl;
+
 	std::string newPath = m_uploadStore;
 	if (newPath[newPath.size() - 1] != '/')
 		newPath += '/';
@@ -256,6 +265,8 @@ void webserv::Upload::renameFile(const std::string& newName)
 
 void webserv::Upload::deleteTempFile(void)
 {
+	std::cerr << "Deleting temporary file" << std::endl;
+
 	if (m_tempFd != -1) 
     {
         close(m_tempFd);
@@ -267,6 +278,8 @@ void webserv::Upload::deleteTempFile(void)
 
 bool webserv::Upload::handleFixedBody(const char* data, size_t length, bool flag)
 {
+	std::cerr << "Handling fixed body upload" << std::endl;
+
 	if (m_is_raw)
 	{
 		size_t offset = 0;
@@ -423,6 +436,8 @@ void webserv::Upload::parseHeaderLine(const std::string& line)
 
 void webserv::Upload::handleChunkedBody(void)
 {
+	std::cerr << "Handling chunked body upload" << std::endl;
+
 	if (m_is_raw)
 	{
 		size_t offset = 0;
@@ -500,6 +515,8 @@ void webserv::Upload::handleChunkedBody(void)
 
 bool webserv::Upload::handleDelete(int clientFd) // Purpose: drain the body of a DELETE request
 {
+	std::cerr << "Handling DELETE request for upload" << std::endl;
+	
 	if (m_upState == UP_UNSET) 
 		initializeDelete();
 

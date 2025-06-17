@@ -6,7 +6,7 @@
 /*   By: tle-moel <tle-moel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/19 10:49:40 by tle-moel          #+#    #+#             */
-/*   Updated: 2025/06/16 12:35:47 by tle-moel         ###   ########.fr       */
+/*   Updated: 2025/06/17 14:01:36 by tle-moel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -190,7 +190,7 @@ void webserv::Parser::parseHeaders(std::string headers)
 		size_t pos = headers.find("\r\n");
 		if (pos == 0) // End of headers -> we got \r\n\r\n
 		{
-			std::cerr << "Parser parsed each line of headers" << std::endl;
+			std::cerr << "End of headers" << std::endl;
 			return;
 		}
 		std::string headerLine = headers.substr(0, pos);
@@ -202,7 +202,7 @@ void webserv::Parser::parseHeaders(std::string headers)
 void webserv::Parser::parseHeaderLine(const std::string& line)
 {
 	// *****
-	std::cerr << "Parsing line : " << line << std::endl;
+	std::cerr << "Current : " << line << std::endl;
 	// *****
 	
 	size_t pos = line.find(':');
@@ -239,8 +239,7 @@ void webserv::Parser::parseHeaderLine(const std::string& line)
 	}
 	else
 		m_request.setHeader(key, value);
-	std::cerr << "Line parsed successfully" << std::endl;
-	std::cerr << "key: " << key << " -> value: " << value << std::endl;
+	std::cerr << "Result : " << key << " -> " << value << std::endl;
 }
 
 void webserv::Parser::normalizeCommaListedValue(std::string& key, std::string& value)
